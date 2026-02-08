@@ -1,0 +1,84 @@
+backend:
+  name: backend
+  replicas: 2
+  image: 
+    repository: ghcr.io/svetlanglad/guestbook-api
+    tag: latest
+    port: 8080
+    pullPolicy: IfNotPresent
+  containerPort: 8080
+  livenessProbe:
+    path: "/health"
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    failureThreshold: 3
+  readinessProbe:
+    path: "/health"
+    initialDelaySeconds: 5
+    periodSeconds: 3
+    failureThreshold: 3
+  env:
+    DB_HOST: postgres
+    DB_PORT: "5432"
+    DB_USER: guestbook
+    DB_NAME: guestbook
+    DB_PASSWORD: password
+    REDIS_HOST: redis
+    REDIS_PORT: "6379"
+    REDIS_PASSWORD: password
+  svc:
+    name: backend
+    port: 8080
+    targetPort: 8080
+    type: ClusterIP
+
+frontend:
+  name: frontend
+  replicas: 1
+  image:
+    repository: ghcr.io/svetlanaglad/guestbook-web
+    tag: latest
+    pullPolicy: IfNotPresent
+  containerPort: 8080
+  cmName: nginx-conf
+  cmPath: /opt/app-root/etc/nginx.d/nginx.conf
+  cmsubPath: nginx.conf
+  svc:
+    name: frontend
+    port: 8080
+    targetPort: 8080
+    type: ClusterIP
+
+postgres:
+  name: postgres
+  image:
+    repository: quay.io/fedora/postgresql-16
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 1
+  containerPort: 5432
+  env:
+    POSTGRESQL_USER: guestbook
+    POSTGRESQL_DATABASE: guestbook
+    POSTGRESQL_PASSWORD: password
+  svc:
+    name: postgres
+    port: 5432
+    targetPort: 5432
+    type: ClusterIP
+
+redis:
+  name: redis
+  image:
+    repository: quay.io/kurs/redis
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 1
+  containerPort: 6379
+  env:
+    REDIS_PASSWORD: password
+  svc:
+    name: redis
+    port: 6379
+    targetPort: 6379
+    type: ClusterIP
